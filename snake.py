@@ -73,6 +73,53 @@ class Snake():
             segment = Segment(x, y, colour)
             self.segments.append(segment)
             self.spriteslist.add(segment)
+
+    def ai_move(self):
+
+        # Ensure snake remains correct colour
+        colour = ORANGE
+
+        move = "up"
+
+        # To Move Left
+        if move == "left":
+            x_change = (segment_width + segment_margin) * -1
+            y_change = 0
+
+        # To Move Right
+        if move == "left":
+            x_change = (segment_width + segment_margin)
+            y_change = 0
+
+        # To Move Up
+        if move == "up":
+            x_change = 0
+            y_change = (segment_height + segment_margin) * -1
+
+        # To Move Down
+        if move == "down":
+            x_change = 0
+            y_change = (segment_height + segment_margin)
+
+
+
+
+        # Figure out where new segment will be
+        x = self.segments[0].rect.x + x_change
+        y = self.segments[0].rect.y + y_change
+
+        # Don't move off the screen
+        if 0 <= x <= width - segment_width and 0 <= y <= height - segment_height:
+            # Insert new segment into the list
+            segment = Segment(x, y, colour)
+            self.segments.insert(0, segment)
+            self.spriteslist.add(segment)
+
+            # Get rid of last segment of the snake
+            # .pop() command removes last item in list
+            old_segment = self.segments.pop()
+            self.spriteslist.remove(old_segment)
+
             
     def move(self):
 
