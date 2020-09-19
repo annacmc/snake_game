@@ -200,8 +200,8 @@ class Obstacle(pygame.sprite.Sprite):
         y = (segment_width + segment_margin) * random.randrange(height / (segment_width + segment_margin))
 
         # Set height, width
-        myheight = (segment_width + segment_margin) * random.randrange(5)
-        mywidth = (segment_width + segment_margin) * random.randrange(5)
+        myheight = (segment_width + segment_margin) * random.randrange(4)
+        mywidth = (segment_width + segment_margin) * random.randrange(8)
 
         #ensure obstacle doesnt run down into scoreboard
         if y + myheight >= height:
@@ -215,8 +215,8 @@ class Obstacle(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
-        # Make sure that obstacles don't collide with the snake in its initial position.
-        if pygame.sprite.spritecollide(self, my_snake.segments, False):
+        # Make sure that obstacles don't collide with the snake or enemy snake in its initial position.
+        if pygame.sprite.spritecollide(self, my_snake.segments, False) or pygame.sprite.spritecollide(self, enemy_snake.segments, False):
             Obstacle()
         else:
             obstacles.add(self)
@@ -243,7 +243,7 @@ my_food = Food()
 # Create some obstacles
 obstacles = pygame.sprite.Group()
 # add some obstacles to the Group
-for i in range(1):
+for i in range(5):
     Obstacle()
 
  
@@ -275,6 +275,9 @@ while not done:
 
     # move snake one step
     my_snake.move()
+
+    # move enemy snake one step
+    enemy_snake.ai_move()
 
     # did snake hit an obstacle?
     hit_list1 = pygame.sprite.spritecollide(my_snake.segments[0], obstacles, False)
