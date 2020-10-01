@@ -36,10 +36,16 @@ segment_margin = 3
 segment_width = min(height, width) / 40 - segment_margin
 segment_height = min(height, width) / 40 - segment_margin
 
+segment_width = int(segment_width)
+segment_height = int(segment_height)
  
 # Set initial speed
 x_change = segment_width + segment_margin
 y_change = 0
+
+# Set initial AI snake direction
+ai_direction_x = 1 #AI Snake will begin moving forward along the X Axis
+ai_direction_y = 0
 
 # Set initial score
 score = 0
@@ -76,51 +82,117 @@ class Snake():
 
     def ai_move(self):
 
-        # Ensure snake remains correct colour
+        # Get direction AI snake is currently travelling
+        global ai_direction_x
+        global ai_direction_y
+
+        # Ensure snake remains correct colour for an enemy snake
         colour = ORANGE
 
-        move = "up"
+        # Get User Snake Location
+        user_snake_x = my_snake.segments[0].rect.x
+        user_snake_y = my_snake.segments[0].rect.y
 
-        # To Move Left
-        if move == "left":
-            x_change = (segment_width + segment_margin) * -1
-            y_change = 0
-
-        # To Move Right
-        if move == "left":
-            x_change = (segment_width + segment_margin)
-            y_change = 0
-
-        # To Move Up
-        if move == "up":
-            x_change = 0
-            y_change = (segment_height + segment_margin) * -1
-
-        # To Move Down
-        if move == "down":
-            x_change = 0
-            y_change = (segment_height + segment_margin)
+        # Get AI snake coordinates
+        enemy_snake_x = my_snake.segments[0].rect.x
+        enemy_snake_y = my_snake.segments[0].rect.y
 
 
+        # Check to see if we are reaching the edges of the screen - if we are, have enemy snake make clever choices about where to turn
+        if self.segments[0].rect.x <= 0 or self.segments[0].rect.x >= 585 or self.segments[0].rect.y <= 0 or self.segments[0].rect.y >= 585:
+            if ai_direction_y == 0:  # if we are moving left/right along the x axis, move on the y axis
 
+                ai_direction_x = 0  # Stop moving current direction
+
+                # Look at where the user snake is on the y-axis to decide which way to turn
+                if user_snake_y > self.segments[
+                    0].rect.y:  # if user_snake_y value is higher then us, move down the screen (higher y value)
+                    ai_direction_y = 1
+
+                elif user_snake_y < self.segments[
+                    0].rect.y:  # if user_snake_y value is lower then us, move up the screen (lower y value)
+                    ai_direction_y = -1
+
+                else:
+                    ai_direction_y = -1
+
+            elif ai_direction_x == 0:  # if we are moving up/down along the y axis, check if wall is on the y axis (to prevent this running while traversing across x axis)
+
+                ai_direction_y = 0  # Stop moving this direction
+
+                # Look at where the user snake is on the x-axis to decide which way to turn
+                if user_snake_x > self.segments[
+                    0].rect.x:  # if user_snake_x value is higher then us, move across the screen towards it (higher x value)
+                    ai_direction_x = 1
+
+                elif user_snake_x < self.segments[
+                    0].rect.x:  # if user_snake_x value is lower then us, move across the screen towards it (lower x value)
+                    ai_direction_x = -1
+
+                else:
+                    ai_direction_x = -1
+
+
+        # Give AI snake some hunting abilities, but limit how often they are used
+        chance = random.random()
+
+        if chance < .1: # lower number = don't chase too agressively!
+
+            # If moving up/down (along y axis) make a predatory move onto the X axis
+            if ai_direction_x == 0:
+
+                # check user snake location relative to enemy snake
+                x_difference = self.segments[0].rect.x - user_snake_x
+
+                # Stop moving along Y axis
+                ai_direction_y = 0
+
+                # If the x_difference is negative or zero, then we need to move right (x positive)
+                if x_difference <= 0:
+                    ai_direction_x = 1
+
+                # If the x_difference is positive, then we need to move left (x- negative)
+                elif x_difference > 0:
+                    ai_direction_x = -1
+
+            # If moving left/right (along x axis) make a predatory move onto the Y axis
+            elif ai_direction_y == 0:
+
+                # check difference on Y Axis to decide which direction
+                y_difference = self.segments[0].rect.y - user_snake_y
+
+                # Stop moving along X axis
+                ai_direction_x = 0
+
+                # If the y_difference is negative or zero, then we need to move down (y+ positive)
+                if y_difference <= 0:
+                    ai_direction_y = 1
+
+                # If the y_difference is positive, then we need to move up (y- negative)
+                elif y_difference > 0:
+                    ai_direction_y = -1
+
+
+        # Set Default Move value to continue in current direction
+        x_change = (segment_width + segment_margin) * ai_direction_x
+        y_change = (segment_width + segment_margin) * ai_direction_y
 
         # Figure out where new segment will be
         x = self.segments[0].rect.x + x_change
         y = self.segments[0].rect.y + y_change
 
-        # Don't move off the screen
-        if 0 <= x <= width - segment_width and 0 <= y <= height - segment_height:
-            # Insert new segment into the list
-            segment = Segment(x, y, colour)
-            self.segments.insert(0, segment)
-            self.spriteslist.add(segment)
+        # Insert new segment into the list
+        segment = Segment(x, y, colour)
+        self.segments.insert(0, segment)
+        self.spriteslist.add(segment)
 
-            # Get rid of last segment of the snake
-            # .pop() command removes last item in list
-            old_segment = self.segments.pop()
-            self.spriteslist.remove(old_segment)
+        # Get rid of last segment of the snake
+        # .pop() command removes last item in list
+        old_segment = self.segments.pop()
+        self.spriteslist.remove(old_segment)
 
-            
+
+
     def move(self):
 
         global game_ended
@@ -150,7 +222,6 @@ class Snake():
         # compare rect.x and rect.y positions of the last and second-to-last segments of the snake to
         # determine the direction in which the snake's tail should grow.
 
-
         # get difference between the last and second-to-last rect.x values
         xdelta = self.segments[-1].rect.x - self.segments[-2].rect.x
         ydelta = self.segments[-1].rect.y - self.segments[-2].rect.y
@@ -158,6 +229,7 @@ class Snake():
         # use difference between values to find correct location/direction to add segment
         x = self.segments[-1].rect.x + xdelta
         y = self.segments[-1].rect.y + ydelta
+
 
         # Create a new segment in the correct position and add it to the snake.
         segment = Segment(x, y, colour)
@@ -207,13 +279,15 @@ class Food():
         # add food to sprites list & food list
         food_item = Food_item(x, y)
 
-        # make sure that new food items do not land on the snake itself
+        # make sure that new food items do not land on the snake or enemy snake
         hit_list = pygame.sprite.spritecollide(food_item, my_snake.segments, False)
+        hit_list2 = pygame.sprite.spritecollide(food_item, enemy_snake.segments, False)
 
-        #If the hit_list is not empty, recursively call the replenish() method to try again.
-        if hit_list :
+
+        #If the hit_lists are not empty, recursively call the replenish() method to try again.
+        if hit_list or hit_list2 :
             self.replenish()
-        elif not hit_list :
+        elif not hit_list and not hit_list2 :
             self.food.append(food_item)
             self.spriteslist.add(food_item)
 
@@ -290,9 +364,8 @@ my_food = Food()
 # Create some obstacles
 obstacles = pygame.sprite.Group()
 # add some obstacles to the Group
-for i in range(5):
+for i in range(25):
     Obstacle()
-
  
 clock = pygame.time.Clock()
 done = False
@@ -332,7 +405,10 @@ while not done:
     #did snake hit its own body
     hit_list2 = pygame.sprite.spritecollide(my_snake.segments[0], my_snake.segments[1:], False)
 
-    if hit_list1 or hit_list2:
+    #did snake run into any part of the enemy snake
+    hit_list3 = pygame.sprite.spritecollide(my_snake.segments[0], enemy_snake.segments, False)
+
+    if hit_list1 or hit_list2 or hit_list3:
         game_ended = True
 
     # did the snake hit food
